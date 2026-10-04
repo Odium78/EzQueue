@@ -5,8 +5,9 @@
 package Main;
 
 import com.formdev.flatlaf.*;
-import Ui.HomePage;
+import Ui.StaffPage;
 import Database.*;
+import Ui.QueuePage;
 
 /**
  *
@@ -20,7 +21,8 @@ public class EzQueueProj {
             Database db = new Database(connection);
             
             FlatLightLaf.setup();
-            new HomePage().setVisible(true);
+            new StaffPage(db).setVisible(true);
+            new QueuePage().setVisible(true);
         });
     }
 }
