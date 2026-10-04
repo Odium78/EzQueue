@@ -8,8 +8,16 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>26</maven.compiler.release>
-        <exec.mainClass>com.lns.ezqueue.proj.EzQueueProj</exec.mainClass>
+        <exec.mainClass>Main.EzQueueProj</exec.mainClass>
     </properties>
+    
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+         </resources>
+    </build>
     
     <dependencies>
         <!-- Source: https://mvnrepository.com/artifact/com.formdev/flatlaf -->

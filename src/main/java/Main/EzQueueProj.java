@@ -2,10 +2,10 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  */
 
-package com.lns.ezqueue.proj;
+package Main;
 
 import com.formdev.flatlaf.*;
-import com.lns.ezqueue.proj.ui.HomePage;
+import Ui.HomePage;
 import Database.*;
 
 /**
@@ -19,7 +19,7 @@ public class EzQueueProj {
             ConnectDB connection = new ConnectDB();
             Database db = new Database(connection);
             
-            FlatDarculaLaf.setup();
+            FlatLightLaf.setup();
             new HomePage().setVisible(true);
         });
     }
