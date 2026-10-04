@@ -5,10 +5,20 @@
 package Ui;
 
 import Data.JsonParser;
+import Data.QueueEntry;
+import Data.QueueEntry.Lane;
+import Data.QueueManager;
 import Database.Database;
 import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JOptionPane;
-
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 /**
  *
  * @author lans
@@ -18,13 +28,134 @@ public class StaffPage extends javax.swing.JFrame {
     QueuePage queuePage = new QueuePage();
     Database database;
     
+    private static final Color SERVING_COLOR = new Color(43, 94, 40);
+    private static final Color PRIORITY_COLOR = new Color(43, 24, 204);
+    
+    private final QueueManager queue = QueueManager.getInstance();
+    private List<QueueEntry> tableRows = new ArrayList<>();
+    private Lane lastLane = Lane.REGULAR;
+    
     /**
      * Creates new form HomePage
      */
     public StaffPage(Database database) {
         initComponents();
         this.database = database;
+        
+        setupQueueTable();
+        queue.addListener(this::refreshQueueTable);
+        refreshQueueTable();
     }
+    
+    private void setupQueueTable() {
+        jTable1.setModel(new DefaultTableModel(new Object[][]{}, new String[]{"Queue #", "Type", "Status"}) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        });
+        jTable1.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+ 
+        // light highlight for the selected row so the green/blue text stays readable on it
+        jTable1.setSelectionBackground(new Color(214, 226, 245));
+        jTable1.setSelectionForeground(Color.BLACK);
+ 
+        // text color per row: Serving = green, priority = blue, regular queued = normal
+        jTable1.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                QueueEntry entry = (row >= 0 && row < tableRows.size()) ? tableRows.get(row) : null;
+ 
+                if (entry != null && entry.isServing()) {
+                    cell.setForeground(SERVING_COLOR);              // serving wins, even for a priority ticket
+                } else if (entry != null && entry.getType().getLane() == Lane.PRIORITY) {
+                    cell.setForeground(PRIORITY_COLOR);
+                } else {
+                    cell.setForeground(table.getForeground());
+                }
+                return cell;
+            }
+        });
+    }
+    
+    private void refreshQueueTable() {
+        QueueEntry previouslySelected = getSelectedEntry();
+ 
+        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+        model.setRowCount(0);
+        tableRows = queue.getAll();
+        for (QueueEntry entry : tableRows) {
+            model.addRow(new Object[]{entry.getNumberText(), entry.getType().getLabel(), entry.getStatus()});
+        }
+
+        int row = tableRows.indexOf(previouslySelected);
+        if (previouslySelected != null && row >= 0) {
+            jTable1.setRowSelectionInterval(row, row);
+        }
+    }
+    
+    private QueueEntry getSelectedEntry() {
+        int row = jTable1.getSelectedRow();
+        if (row < 0 || row >= tableRows.size()) return null;
+        return tableRows.get(row);
+    }
+    
+    private QueueEntry requireSelectedEntry() {
+        QueueEntry selected = getSelectedEntry();
+        if (selected == null) {
+            JOptionPane.showMessageDialog(this, "Select a queue in the table first.",
+                    "Nothing Selected", JOptionPane.INFORMATION_MESSAGE);
+        }
+        return selected;
+    }
+
+    private Lane pickLane() {
+        QueueEntry selected = getSelectedEntry();
+        if (selected != null) {
+            lastLane = selected.getType().getLane();
+            return lastLane;
+        }
+ 
+        String[] options = {"Regular", "Priority"};
+        int choice = JOptionPane.showOptionDialog(this, "Which line?", "Select Line",
+                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+                options, options[lastLane.ordinal()]);
+        if (choice < 0) return null;
+        lastLane = (choice == 1) ? Lane.PRIORITY : Lane.REGULAR;
+        return lastLane;
+    }
+ 
+    private void showEmptyLine(Lane lane) {
+        JOptionPane.showMessageDialog(this, "The " + (lane == Lane.PRIORITY ? "priority" : "regular")
+                + " line is empty.", "Queue Empty", JOptionPane.INFORMATION_MESSAGE);
+    }
+ 
+    private QueueEntry pickHead() {
+        Lane lane = pickLane();
+        if (lane == null) return null;
+        QueueEntry head = queue.getHead(lane);
+        if (head == null) showEmptyLine(lane);
+        return head;
+    }
+ 
+    private QueueEntry pickRear() {
+        Lane lane = pickLane();
+        if (lane == null) return null;
+        QueueEntry rear = queue.getRear(lane);
+        if (rear == null) showEmptyLine(lane);
+        return rear;
+    }
+    
+    private QueueEntry.Type getSelectedType() {
+        String selected = String.valueOf(jComboBox1.getSelectedItem());
+        if (selected.contains("PWD")) return QueueEntry.Type.PWD;
+        if (selected.equalsIgnoreCase("Senior")) return QueueEntry.Type.SENIOR;
+        if (selected.equalsIgnoreCase("Pregnant")) return QueueEntry.Type.PREGNANT;
+        return QueueEntry.Type.REGULAR;
+    }
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -42,12 +173,8 @@ public class StaffPage extends javax.swing.JFrame {
         jTable1 = new javax.swing.JTable();
         jLabel7 = new javax.swing.JLabel();
         jButton6 = new javax.swing.JButton();
-        jButton7 = new javax.swing.JButton();
-        jButton8 = new javax.swing.JButton();
         jButton9 = new javax.swing.JButton();
         jLabel8 = new javax.swing.JLabel();
-        jButton10 = new javax.swing.JButton();
-        jButton11 = new javax.swing.JButton();
         jButton12 = new javax.swing.JButton();
         jButton13 = new javax.swing.JButton();
         jComboBox1 = new javax.swing.JComboBox<>();
@@ -78,8 +205,10 @@ public class StaffPage extends javax.swing.JFrame {
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel2.setText("Queue Management System");
 
+        jScrollPane1.setAlignmentY(1.0F);
         jScrollPane1.setVerifyInputWhenFocusTarget(false);
 
+        jTable1.setFont(new java.awt.Font("sansserif", 0, 18)); // NOI18N
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null},
@@ -114,14 +243,6 @@ public class StaffPage extends javax.swing.JFrame {
         jButton6.setText("Menu");
         jButton6.addActionListener(this::jButton6ActionPerformed);
 
-        jButton7.setFont(new java.awt.Font("sansserif", 2, 14)); // NOI18N
-        jButton7.setText("Delete Head");
-        jButton7.addActionListener(this::jButton7ActionPerformed);
-
-        jButton8.setFont(new java.awt.Font("sansserif", 2, 14)); // NOI18N
-        jButton8.setText("Delete Rear");
-        jButton8.addActionListener(this::jButton8ActionPerformed);
-
         jButton9.setFont(new java.awt.Font("sansserif", 2, 14)); // NOI18N
         jButton9.setText("Delete Selected");
         jButton9.addActionListener(this::jButton9ActionPerformed);
@@ -129,14 +250,6 @@ public class StaffPage extends javax.swing.JFrame {
         jLabel8.setFont(new java.awt.Font("sansserif", 1, 18)); // NOI18N
         jLabel8.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel8.setText("Control Center");
-
-        jButton10.setFont(new java.awt.Font("sansserif", 2, 14)); // NOI18N
-        jButton10.setText("Queue in Head");
-        jButton10.addActionListener(this::jButton10ActionPerformed);
-
-        jButton11.setFont(new java.awt.Font("sansserif", 2, 14)); // NOI18N
-        jButton11.setText("Queue in Rear");
-        jButton11.addActionListener(this::jButton11ActionPerformed);
 
         jButton12.setFont(new java.awt.Font("sansserif", 2, 14)); // NOI18N
         jButton12.setText("Queue in Selected");
@@ -155,6 +268,10 @@ public class StaffPage extends javax.swing.JFrame {
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(jLabel7)
+                .addGap(232, 232, 232))
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
@@ -165,37 +282,23 @@ public class StaffPage extends javax.swing.JFrame {
                             .addComponent(jButton6))
                         .addGroup(jPanel5Layout.createSequentialGroup()
                             .addGap(25, 25, 25)
-                            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 883, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGroup(jPanel5Layout.createSequentialGroup()
-                                    .addComponent(jButton7)
-                                    .addGap(18, 18, 18)
-                                    .addComponent(jButton8)
-                                    .addGap(18, 18, 18)
-                                    .addComponent(jButton9)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(jButton10)
-                                    .addGap(18, 18, 18)
-                                    .addComponent(jButton11)
-                                    .addGap(18, 18, 18)
-                                    .addComponent(jButton12)))))
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 883, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(jPanel5Layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 153, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel5Layout.createSequentialGroup()
+                                .addGap(22, 22, 22)
+                                .addComponent(jLabel9)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(12, 12, 12)
+                                .addComponent(jButton13)
+                                .addGap(18, 18, 18)
+                                .addComponent(jButton12)
+                                .addGap(18, 18, 18)
+                                .addComponent(jButton9))
+                            .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 153, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap(252, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
-                        .addComponent(jLabel7)
-                        .addGap(232, 232, 232))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
-                        .addComponent(jLabel9)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(jButton13)
-                        .addGap(483, 483, 483))))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -205,25 +308,19 @@ public class StaffPage extends javax.swing.JFrame {
                     .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jButton6))
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 414, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(8, 8, 8)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 447, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton7, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton8, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton9, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton10, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton11, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton12, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton13, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton12, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel9)
                     .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel9))
-                .addGap(4, 4, 4)
+                    .addComponent(jButton13, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton9, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(30, 30, 30)
                 .addComponent(jLabel7)
-                .addContainerGap(998, Short.MAX_VALUE))
+                .addContainerGap(1031, Short.MAX_VALUE))
         );
 
         jPanel2.add(jPanel5, "mgr");
@@ -288,7 +385,7 @@ public class StaffPage extends javax.swing.JFrame {
                 .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(26, 26, 26)
                 .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(1054, Short.MAX_VALUE))
+                .addContainerGap(1087, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addGap(226, 226, 226)
                 .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -364,7 +461,7 @@ public class StaffPage extends javax.swing.JFrame {
                 .addComponent(jPasswordField1, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(45, 45, 45)
                 .addComponent(jButton1)
-                .addContainerGap(1150, Short.MAX_VALUE))
+                .addContainerGap(1183, Short.MAX_VALUE))
         );
 
         jPanel2.add(jPanel3, "login");
@@ -431,38 +528,23 @@ public class StaffPage extends javax.swing.JFrame {
         cl.show(jPanel2, "dash");
     }//GEN-LAST:event_jButton6ActionPerformed
 
-    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton7ActionPerformed
-
-    private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton8ActionPerformed
-
     private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
         // TODO add your handling code here:
+        queue.remove(requireSelectedEntry());
     }//GEN-LAST:event_jButton9ActionPerformed
-
-    private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton10ActionPerformed
-
-    private void jButton11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton11ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton11ActionPerformed
 
     private void jButton12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton12ActionPerformed
         // TODO add your handling code here:
+        queue.serve(requireSelectedEntry());
     }//GEN-LAST:event_jButton12ActionPerformed
 
     private void jButton13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton13ActionPerformed
         // TODO add your handling code here:
+        queue.add(getSelectedType());
     }//GEN-LAST:event_jButton13ActionPerformed
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton10;
-    private javax.swing.JButton jButton11;
     private javax.swing.JButton jButton12;
     private javax.swing.JButton jButton13;
     private javax.swing.JButton jButton2;
@@ -470,8 +552,6 @@ public class StaffPage extends javax.swing.JFrame {
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
     private javax.swing.JButton jButton6;
-    private javax.swing.JButton jButton7;
-    private javax.swing.JButton jButton8;
     private javax.swing.JButton jButton9;
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel1;

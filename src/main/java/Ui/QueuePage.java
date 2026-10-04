@@ -5,9 +5,20 @@
 package Ui;
 
 import Data.JsonParser;
+import Data.QueueEntry;
+import Data.QueueEntry.Lane;
+import Data.QueueManager;
+import java.awt.Color;
+import java.awt.Font;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.Timer;
+
 
 /**
  *
@@ -18,6 +29,7 @@ public class QueuePage extends javax.swing.JFrame {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(QueuePage.class.getName());
     private Timer clockTimer;
     private JsonParser parser = new JsonParser();
+    private static final int MAX_WAITING_SHOWN = 12;
 
     /**
      * Creates new form Queue
@@ -25,6 +37,10 @@ public class QueuePage extends javax.swing.JFrame {
     public QueuePage() {
         initComponents();
         startClock();
+        
+        QueueManager.getInstance().addListener(this::refreshQueue);
+        refreshQueue();
+
     }
     
     private void startClock() {
@@ -35,6 +51,50 @@ public class QueuePage extends javax.swing.JFrame {
             clockLabel.setText(LocalDateTime.now().format(fmt)));
         clockTimer.start();
     }
+    
+    private void refreshQueue() {
+        QueueManager queue = QueueManager.getInstance();
+ 
+        showServing(jLabel8, queue.getServing(Lane.REGULAR));    // regular
+        showServing(jLabel11, queue.getServing(Lane.PRIORITY));  // priority
+ 
+        showWaiting(jPanel8, queue.getLine(Lane.REGULAR));       // regular line
+        showWaiting(jPanel9, queue.getLine(Lane.PRIORITY));      // priority line
+    }
+    
+    private void showServing(JLabel label, QueueEntry serving) {
+        label.setText(serving == null ? "None" : serving.getNumberText());
+    }
+
+    private void showWaiting(JPanel panel, List<QueueEntry> line) {
+        panel.removeAll();
+ 
+        int waiting = 0;
+        int shown = 0;
+        for (QueueEntry entry : line) {
+            if (entry.isServing()) continue; // being served -> not shown down here
+            waiting++;
+            if (shown < MAX_WAITING_SHOWN) {
+                panel.add(makeTicketLabel(entry.getNumberText()));
+                shown++;
+            }
+        }
+        if (waiting > shown) {
+            panel.add(makeTicketLabel("+" + (waiting - shown)));
+        }
+ 
+        panel.revalidate();
+        panel.repaint();
+    }
+ 
+    private JLabel makeTicketLabel(String text) {
+        JLabel label = new JLabel(text, SwingConstants.CENTER);
+        label.setFont(new Font("Noto Sans", Font.BOLD, 24));
+        label.setForeground(Color.BLACK);
+        label.setBorder(BorderFactory.createLineBorder(new Color(150, 150, 150)));
+        return label;
+    }
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -89,16 +149,13 @@ public class QueuePage extends javax.swing.JFrame {
         jPanel6.setLayout(jPanel6Layout);
         jPanel6Layout.setHorizontalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE)
             .addGroup(jPanel6Layout.createSequentialGroup()
-                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel6Layout.createSequentialGroup()
-                        .addGap(133, 133, 133)
-                        .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel6Layout.createSequentialGroup()
-                        .addGap(91, 91, 91)
-                        .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 197, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(92, Short.MAX_VALUE))
+                .addGap(91, 91, 91)
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, 197, Short.MAX_VALUE)
+                    .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -133,16 +190,13 @@ public class QueuePage extends javax.swing.JFrame {
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jLabel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jLabel10, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE)
             .addGroup(jPanel7Layout.createSequentialGroup()
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel7Layout.createSequentialGroup()
-                        .addGap(133, 133, 133)
-                        .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel7Layout.createSequentialGroup()
-                        .addGap(91, 91, 91)
-                        .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 197, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(92, Short.MAX_VALUE))
+                .addGap(91, 91, 91)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel12, javax.swing.GroupLayout.DEFAULT_SIZE, 197, Short.MAX_VALUE)
+                    .addComponent(jLabel11, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
