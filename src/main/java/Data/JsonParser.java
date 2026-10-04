@@ -4,6 +4,7 @@
  */
 package Data;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
@@ -12,17 +13,13 @@ import java.io.IOException;
  *
  * @author lans
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonParser {
     private final ObjectMapper mapper = new ObjectMapper();
     
-    public String parseName() {
+    public Company parseCompany() {
         try {
-            // 1. Map the JSON file directly to the Company object
-            Company company = mapper.readValue(new File("data.json"), Company.class);
-            
-            // 2. Return the string value
-            return company.getcompanyName();
-            
+            return mapper.readValue(new File("data.json"), Company.class);
         } catch (IOException e) {
             throw new RuntimeException("Failed to parse Company JSON", e);
         }

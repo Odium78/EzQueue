@@ -5,6 +5,8 @@
 package Database;
 
 import java.sql.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -22,7 +24,15 @@ public class Database {
         this.database  = connectionDB.getConnection();
     }
     
-    public boolean authUser(String username, String password) {
+    public String getDate(){
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedString = now.format(formatter);
+        
+        return formattedString;
+    }
+    
+    public boolean authUser(String username, String password){
         String query = "SELECT * FROM users WHERE username = ? AND password = ?";
         try (PreparedStatement exec = database.prepareStatement(query)) {
             exec.setString(1, username);
@@ -36,7 +46,7 @@ public class Database {
         }
     }
     
-    public boolean addUser(String username, String password) {
+    public boolean addUser(String username, String password){
         String query = "INSERT INTO users(username, password) VALUES(?,?)";
         try (PreparedStatement exec = database.prepareStatement(query)) {
             exec.setString(1, username);
@@ -52,7 +62,7 @@ public class Database {
         }
     }
     
-    public boolean deleteUser(String username) {
+    public boolean deleteUser(String username){
         String query = "DELETE FROM users WHERE username = ?";
         try (PreparedStatement exec = database.prepareStatement(query)) {
             exec.setString(1, username);
@@ -71,5 +81,60 @@ public class Database {
                     "SQL ERROR " + e.getErrorCode(), JOptionPane.ERROR_MESSAGE);
             return false;
         }
+    }
+    
+    public boolean updateUsername(String oldUsername, String newUsername){
+        String query = "UPDATE users SET username = ? WHERE username = ?";
+        try (PreparedStatement exec = database.prepareStatement(query)) {
+            exec.setString(1, newUsername);
+            exec.setString(2, oldUsername);
+            return exec.executeUpdate() > 0;
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.getMessage(),
+                    "SQL ERROR " + e.getErrorCode(), JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+    
+    public boolean updatePassword(String username, String newPassword){
+        String query = "UPDATE users SET password = ? WHERE username = ?";
+        try (PreparedStatement exec = database.prepareStatement(query)) {
+            exec.setString(1, newPassword);
+            exec.setString(2, username);
+            return exec.executeUpdate() > 0;
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.getMessage(),
+                    "SQL ERROR " + e.getErrorCode(), JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+    
+    public boolean log(String message){
+        String query = "INSERT INTO logs(date, message) VALUES(?,?)";
+        try (PreparedStatement exec = database.prepareStatement(query)) {
+            exec.setString(1, getDate());
+            exec.setString(2, message);
+            exec.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.getStackTrace(),
+                    "SQL ERROR " + e.getErrorCode(), JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+    
+    public List<String[]> getLogs(){
+        List<String[]> logs = new ArrayList<>();
+        String query = "SELECT date, message FROM logs ORDER BY date DESC, rowid DESC";
+        try (PreparedStatement exec = database.prepareStatement(query);
+             ResultSet set = exec.executeQuery()) {
+            while (set.next()) {
+                logs.add(new String[]{set.getString("date"), set.getString("message")});
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.getMessage(),
+                    "SQL ERROR " + e.getErrorCode(), JOptionPane.ERROR_MESSAGE);
+        }
+        return logs;
     }
 }

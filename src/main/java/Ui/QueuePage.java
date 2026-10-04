@@ -4,6 +4,7 @@
  */
 package Ui;
 
+import Data.Company;
 import Data.JsonParser;
 import Data.QueueEntry;
 import Data.QueueEntry.Lane;
@@ -29,6 +30,7 @@ public class QueuePage extends javax.swing.JFrame {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(QueuePage.class.getName());
     private Timer clockTimer;
     private JsonParser parser = new JsonParser();
+    Company company = parser.parseCompany();
     private static final int MAX_WAITING_SHOWN = 12;
 
     /**
@@ -126,24 +128,28 @@ public class QueuePage extends javax.swing.JFrame {
         setResizable(false);
 
         jLabel2.setFont(new java.awt.Font("Noto Sans", 1, 36)); // NOI18N
-        jLabel2.setText(parser.parseName());
+        jLabel2.setText(company.getcompanyName());
 
         jPanel6.setBackground(new java.awt.Color(204, 204, 204));
+        jPanel6.putClientProperty("FlatLaf.styleClass", "queuePanel");
 
         jLabel7.setFont(new java.awt.Font("Noto Sans", 1, 24)); // NOI18N
         jLabel7.setForeground(new java.awt.Color(0, 0, 0));
         jLabel7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel7.setText("Currently Serving");
+        jLabel7.putClientProperty("FlatLaf.styleClass", "queueText");
 
         jLabel8.setFont(new java.awt.Font("Noto Sans", 1, 60)); // NOI18N
         jLabel8.setForeground(new java.awt.Color(0, 0, 0));
         jLabel8.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel8.setText("00");
+        jLabel8.putClientProperty("FlatLaf.styleClass", "queueText");
 
         jLabel9.setFont(new java.awt.Font("Noto Sans", 1, 24)); // NOI18N
         jLabel9.setForeground(new java.awt.Color(0, 0, 0));
         jLabel9.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel9.setText("Regular");
+        jLabel9.putClientProperty("FlatLaf.styleClass", "queueText");
 
         javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
         jPanel6.setLayout(jPanel6Layout);
@@ -170,21 +176,25 @@ public class QueuePage extends javax.swing.JFrame {
         );
 
         jPanel7.setBackground(new java.awt.Color(204, 204, 204));
+        jPanel7.putClientProperty("FlatLaf.styleClass", "queuePanel");
 
         jLabel10.setFont(new java.awt.Font("Noto Sans", 1, 24)); // NOI18N
         jLabel10.setForeground(new java.awt.Color(0, 0, 0));
         jLabel10.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel10.setText("Currently Serving");
+        jLabel10.putClientProperty("FlatLaf.styleClass", "queueText");
 
         jLabel11.setFont(new java.awt.Font("Noto Sans", 1, 60)); // NOI18N
         jLabel11.setForeground(new java.awt.Color(0, 0, 0));
         jLabel11.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel11.setText("00");
+        jLabel11.putClientProperty("FlatLaf.styleClass", "queueText");
 
         jLabel12.setFont(new java.awt.Font("Noto Sans", 1, 24)); // NOI18N
         jLabel12.setForeground(new java.awt.Color(0, 0, 0));
         jLabel12.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel12.setText("Priority");
+        jLabel12.putClientProperty("FlatLaf.styleClass", "queueText");
 
         javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
@@ -212,19 +222,23 @@ public class QueuePage extends javax.swing.JFrame {
 
         jLabel13.setFont(new java.awt.Font("Noto Sans", 1, 24)); // NOI18N
         jLabel13.setText("In Queue (Priority)");
+        jLabel13.putClientProperty("FlatLaf.styleClass", "inqueueText");
 
         jPanel8.setBackground(new java.awt.Color(204, 204, 204));
-        jPanel8.setLayout(new java.awt.GridLayout());
+        jPanel8.putClientProperty("FlatLaf.styleClass", "queuePanel");
+        jPanel8.setLayout(new java.awt.GridLayout(1, 0));
 
         jLabel14.setFont(new java.awt.Font("Noto Sans", 1, 24)); // NOI18N
         jLabel14.setText("In Queue (Regular)");
+        jLabel14.putClientProperty("FlatLaf.styleClass", "inqueueText");
 
         clockLabel.setFont(new java.awt.Font("sansserif", 1, 36)); // NOI18N
         clockLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         clockLabel.setText("00:00:00");
 
         jPanel9.setBackground(new java.awt.Color(204, 204, 204));
-        jPanel9.setLayout(new java.awt.GridLayout());
+        jPanel9.putClientProperty("FlatLaf.styleClass", "queuePanel");
+        jPanel9.setLayout(new java.awt.GridLayout(1, 0));
 
         jLabel1.setFont(new java.awt.Font("sansserif", 0, 12)); // NOI18N
         jLabel1.setText("Powered by EzQueue");
@@ -247,24 +261,21 @@ public class QueuePage extends javax.swing.JFrame {
                                         .addComponent(jLabel2)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                         .addComponent(clockLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 232, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                        .addGroup(jPanel4Layout.createSequentialGroup()
-                                            .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 238, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel4Layout.createSequentialGroup()
-                                            .addGap(8, 8, 8)
-                                            .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addComponent(jLabel14, javax.swing.GroupLayout.PREFERRED_SIZE, 238, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                                     .addGroup(jPanel4Layout.createSequentialGroup()
                                         .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addGroup(jPanel4Layout.createSequentialGroup()
+                                                .addGap(8, 8, 8)
+                                                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                    .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                    .addComponent(jLabel14, javax.swing.GroupLayout.PREFERRED_SIZE, 238, javax.swing.GroupLayout.PREFERRED_SIZE)))
                                             .addGroup(jPanel4Layout.createSequentialGroup()
                                                 .addGap(8, 8, 8)
                                                 .addComponent(jPanel8, javax.swing.GroupLayout.PREFERRED_SIZE, 843, javax.swing.GroupLayout.PREFERRED_SIZE))
                                             .addGroup(jPanel4Layout.createSequentialGroup()
                                                 .addGap(6, 6, 6)
-                                                .addComponent(jPanel9, javax.swing.GroupLayout.PREFERRED_SIZE, 843, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                    .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 238, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                    .addComponent(jPanel9, javax.swing.GroupLayout.PREFERRED_SIZE, 843, javax.swing.GroupLayout.PREFERRED_SIZE))))
                                         .addGap(0, 0, Short.MAX_VALUE)))))
                         .addGap(0, 70, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
@@ -287,11 +298,11 @@ public class QueuePage extends javax.swing.JFrame {
                 .addComponent(jLabel14, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel8, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel9, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 23, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 17, Short.MAX_VALUE)
                 .addComponent(jLabel1)
                 .addContainerGap())
         );
