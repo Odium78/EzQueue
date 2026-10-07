@@ -19,6 +19,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
+import javax.swing.JFrame;
 
 
 /**
@@ -125,6 +126,8 @@ public class QueuePage extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Queue");
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setResizable(false);
 
         jLabel2.setFont(new java.awt.Font("Noto Sans", 1, 36)); // NOI18N
