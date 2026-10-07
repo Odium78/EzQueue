@@ -15,8 +15,6 @@ import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
 /**
- * Handles the custom company logo. The chosen image is stored next to
- * settings.json / data.db (not inside the jar), so it survives every run.
  *
  * @author lans
  */
