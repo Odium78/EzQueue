@@ -45,7 +45,7 @@ import javax.swing.table.DefaultTableModel;
 public class StaffPage extends javax.swing.JFrame {
     JsonParser parser = new JsonParser();
     Company company = parser.parseCompany();
-    private final QueuePage queuePage; // the visible queue display, so the logo can be refreshed live
+    private final QueuePage queuePage; // save memory bro
     Database database;
     
     private static final Color SERVING_COLOR = new Color(43, 94, 40);
@@ -56,6 +56,16 @@ public class StaffPage extends javax.swing.JFrame {
     private Lane lastLane = Lane.REGULAR;
     
     private User user = new User("nil", "nil");
+    
+    // size of logo
+    private static final int LOGO_PREVIEW_WIDTH = 152;
+    private static final int LOGO_PREVIEW_HEIGHT = 59;
+
+    private BufferedImage pendingLogo;
+    
+    private static final String[] ROLES = {"admin", "manager", "staff"};
+
+    private static final int MIN_PASSWORD_LENGTH = 4;
     
     /**
      * Creates new form HomePage
@@ -83,12 +93,10 @@ public class StaffPage extends javax.swing.JFrame {
             }
         });
         jTable1.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
- 
-        // light highlight for the selected row so the green/blue text stays readable on it
+
         jTable1.setSelectionBackground(new Color(214, 226, 245));
         jTable1.setSelectionForeground(Color.BLACK);
- 
-        // text color per row: Serving = green, priority = blue, regular queued = normal
+        
         jTable1.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
@@ -201,8 +209,7 @@ public class StaffPage extends javax.swing.JFrame {
             model.addRow(row);
         }
     }
-
-    // Role privileges. Unknown or missing roles count as "staff" (least access).
+    
     private void applyRole(String username) {
         String role = database.getUserType(username);
         role = (role == null) ? "staff" : role.trim().toLowerCase();
@@ -210,14 +217,12 @@ public class StaffPage extends javax.swing.JFrame {
         user.setType(role);
 
         boolean elevated = role.equals("admin") || role.equals("manager");
-        jButton2.setVisible(true);          // Manage Queue    - everyone
-        jButton4.setVisible(true);          // Account         - everyone
-        jButton5.setVisible(elevated);      // Logs            - manager, admin
-        jButton3.setVisible(elevated);      // System Settings - manager, admin
-        jButton18.setEnabled(role.equals("admin")); // Apply skin - admin only
+        jButton2.setVisible(true);// everyone
+        jButton4.setVisible(true);// everyone
+        jButton5.setVisible(elevated);// manager, admin
+        jButton3.setVisible(elevated);//  manager, admin
+        jButton18.setEnabled(role.equals("admin")); // skin - admin only
     }
-
-    // Fill the skin dropdown from the Skins resource folder and select the current skin
     private void setupSkinCombo() {
         List<String> skins = SkinLoader.listSkins();
         jComboBox2.setModel(new DefaultComboBoxModel<>(skins.toArray(new String[0])));
@@ -231,13 +236,6 @@ public class StaffPage extends javax.swing.JFrame {
         }
     }
 
-    // size of the jLabel23 preview box (fixed in the form)
-    private static final int LOGO_PREVIEW_WIDTH = 152;
-    private static final int LOGO_PREVIEW_HEIGHT = 59;
-
-    private BufferedImage pendingLogo; // picked with Select File, saved with the logo Apply button
-
-    // Fill the name field and show the currently saved logo (if any) in the preview
     private void setupCompanySettings() {
         String name = company.getcompanyName();
         jTextField3.setText(name == null ? "" : name);
@@ -254,7 +252,11 @@ public class StaffPage extends javax.swing.JFrame {
         jLabel23.setText("");
     }
 
-    private static final String[] ROLES = {"admin", "manager", "staff"};
+    private void showPasswordTooShort() {
+        JOptionPane.showMessageDialog(this,
+                "Password must be at least " + MIN_PASSWORD_LENGTH + " characters long.",
+                "Invalid Password", JOptionPane.ERROR_MESSAGE);
+    }
 
     private void setupAccountTable() {
         jTable3.setModel(new DefaultTableModel(new Object[][]{}, new String[]{"Name", "Type"}) {
@@ -307,12 +309,8 @@ public class StaffPage extends javax.swing.JFrame {
         }
         return name;
     }
-
-    /**
-     * Shows the Add / Edit account window.
-     * Returns {username, password, role} or null if the user cancelled.
-     * When editing, a blank password means "keep the current one".
-     */
+    
+    // quick way
     private String[] showAccountDialog(String title, String presetName, String presetRole, boolean editing) {
         JTextField nameField = new JTextField(presetName == null ? "" : presetName, 20);
         JPasswordField passField = new JPasswordField(20);
@@ -358,7 +356,12 @@ public class StaffPage extends javax.swing.JFrame {
                         "Invalid Input", JOptionPane.ERROR_MESSAGE);
                 continue;
             }
-            // username changed (or new account): make sure nobody else has it
+            // length checks
+            if (!pass.isEmpty() && pass.length() < MIN_PASSWORD_LENGTH) {
+                showPasswordTooShort();
+                continue;
+            }
+            // check if username is taken b4 query
             boolean nameChanged = !editing || !name.equals(presetName);
             if (nameChanged && database.userExists(name)) {
                 JOptionPane.showMessageDialog(this, "The username \"" + name + "\" is already taken.",
@@ -1167,6 +1170,12 @@ public class StaffPage extends javax.swing.JFrame {
     private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
         // TODO add your handling code here:
         String passString = new String(jPasswordField2.getPassword()).trim();
+
+        if (!passString.isEmpty() && passString.length() < MIN_PASSWORD_LENGTH) {
+            showPasswordTooShort();
+            return;
+        }
+
         if (!passString.isEmpty() && !jTextField2.getText().trim().isEmpty()){
             database.updatePassword(user.getUsername(), passString);
             database.updateUsername(user.getUsername(), jTextField2.getText());
