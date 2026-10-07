@@ -14,11 +14,17 @@ import Database.Database;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -51,6 +57,8 @@ public class StaffPage extends javax.swing.JFrame {
         
         setupQueueTable();
         setupLogsTable();
+        setupAccountTable();
+        refreshAccountTable();
         queue.addListener(this::refreshQueueTable);
         refreshQueueTable();
     }
@@ -182,6 +190,121 @@ public class StaffPage extends javax.swing.JFrame {
         }
     }
 
+    private static final String[] ROLES = {"admin", "manager", "staff"};
+
+    private void setupAccountTable() {
+        jTable3.setModel(new DefaultTableModel(new Object[][]{}, new String[]{"Name", "Type"}) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        });
+        jTable3.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    }
+
+    private void refreshAccountTable() {
+        String previouslySelected = getSelectedAccountName();
+
+        DefaultTableModel model = (DefaultTableModel) jTable3.getModel();
+        model.setRowCount(0);
+        for (String[] row : database.getUsers()) {
+            model.addRow(row);
+        }
+
+        // keep the same row selected if it still exists
+        if (previouslySelected != null) {
+            for (int i = 0; i < model.getRowCount(); i++) {
+                if (previouslySelected.equals(model.getValueAt(i, 0))) {
+                    jTable3.setRowSelectionInterval(i, i);
+                    break;
+                }
+            }
+        }
+    }
+
+    private String getSelectedAccountName() {
+        int row = jTable3.getSelectedRow();
+        if (row < 0) return null;
+        return String.valueOf(jTable3.getValueAt(row, 0));
+    }
+
+    private String getSelectedAccountType() {
+        int row = jTable3.getSelectedRow();
+        if (row < 0) return null;
+        Object type = jTable3.getValueAt(row, 1);
+        return type == null ? null : String.valueOf(type);
+    }
+
+    private String requireSelectedAccount() {
+        String name = getSelectedAccountName();
+        if (name == null) {
+            JOptionPane.showMessageDialog(this, "Select an account in the table first.",
+                    "Nothing Selected", JOptionPane.INFORMATION_MESSAGE);
+        }
+        return name;
+    }
+
+    /**
+     * Shows the Add / Edit account window.
+     * Returns {username, password, role} or null if the user cancelled.
+     * When editing, a blank password means "keep the current one".
+     */
+    private String[] showAccountDialog(String title, String presetName, String presetRole, boolean editing) {
+        JTextField nameField = new JTextField(presetName == null ? "" : presetName, 20);
+        JPasswordField passField = new JPasswordField(20);
+        JComboBox<String> roleBox = new JComboBox<>(ROLES);
+        if (presetRole != null) {
+            for (String role : ROLES) {
+                if (role.equalsIgnoreCase(presetRole)) {
+                    roleBox.setSelectedItem(role);
+                    break;
+                }
+            }
+        } else {
+            roleBox.setSelectedItem("staff");
+        }
+
+        JPanel form = new JPanel(new GridLayout(0, 2, 8, 8));
+        form.add(new JLabel("Username:"));
+        form.add(nameField);
+        form.add(new JLabel(editing ? "New Password:" : "Password:"));
+        form.add(passField);
+        form.add(new JLabel("Role:"));
+        form.add(roleBox);
+        if (editing) {
+            form.add(new JLabel(""));
+            form.add(new JLabel("<html><i>Leave password blank to keep it.</i></html>"));
+        }
+
+        while (true) {
+            int choice = JOptionPane.showConfirmDialog(this, form, title,
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (choice != JOptionPane.OK_OPTION) return null;
+
+            String name = nameField.getText().trim();
+            String pass = new String(passField.getPassword());
+
+            if (name.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Username can't be empty.",
+                        "Invalid Input", JOptionPane.ERROR_MESSAGE);
+                continue;
+            }
+            if (!editing && pass.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Password can't be empty.",
+                        "Invalid Input", JOptionPane.ERROR_MESSAGE);
+                continue;
+            }
+            // username changed (or new account): make sure nobody else has it
+            boolean nameChanged = !editing || !name.equals(presetName);
+            if (nameChanged && database.userExists(name)) {
+                JOptionPane.showMessageDialog(this, "The username \"" + name + "\" is already taken.",
+                        "Invalid Input", JOptionPane.ERROR_MESSAGE);
+                continue;
+            }
+            return new String[]{name, pass, String.valueOf(roleBox.getSelectedItem())};
+        }
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -191,6 +314,7 @@ public class StaffPage extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jMenuItem1 = new javax.swing.JMenuItem();
         jPanel2 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
@@ -244,6 +368,14 @@ public class StaffPage extends javax.swing.JFrame {
         jLabel17 = new javax.swing.JLabel();
         jButton16 = new javax.swing.JButton();
         jButton17 = new javax.swing.JButton();
+        jLabel18 = new javax.swing.JLabel();
+        jLabel19 = new javax.swing.JLabel();
+        jComboBox2 = new javax.swing.JComboBox<>();
+        jButton18 = new javax.swing.JButton();
+        jButton19 = new javax.swing.JButton();
+        jButton20 = new javax.swing.JButton();
+
+        jMenuItem1.setText("jMenuItem1");
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
@@ -299,7 +431,7 @@ public class StaffPage extends javax.swing.JFrame {
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGap(420, 420, 420)
                         .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(346, Short.MAX_VALUE))
+                .addContainerGap(817, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -423,7 +555,7 @@ public class StaffPage extends javax.swing.JFrame {
                                 .addGap(18, 18, 18)
                                 .addComponent(jButton9))
                             .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 153, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(363, Short.MAX_VALUE))
+                .addContainerGap(834, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
                 .addGap(0, 0, Short.MAX_VALUE)
                 .addComponent(jLabel7)
@@ -502,32 +634,28 @@ public class StaffPage extends javax.swing.JFrame {
                             .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 397, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(17, 17, 17)
-                        .addComponent(jLabel6)))
-                .addContainerGap(372, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(jLabel10)
-                .addGap(296, 296, 296))
+                        .addComponent(jLabel6))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(420, 420, 420)
+                        .addComponent(jLabel10)))
+                .addContainerGap(843, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(12, 12, 12)
-                        .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(26, 26, 26)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(647, 647, 647)
-                        .addComponent(jLabel10)))
-                .addContainerGap(1049, Short.MAX_VALUE))
+                .addGap(12, 12, 12)
+                .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(26, 26, 26)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(42, 42, 42)
+                .addComponent(jLabel10)
+                .addContainerGap(1048, Short.MAX_VALUE))
         );
 
         jPanel2.add(jPanel1, "dash");
@@ -594,7 +722,7 @@ public class StaffPage extends javax.swing.JFrame {
                                 .addGroup(jPanel4Layout.createSequentialGroup()
                                     .addGap(137, 137, 137)
                                     .addComponent(jButton7))))))
-                .addContainerGap(676, Short.MAX_VALUE))
+                .addContainerGap(1147, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -678,7 +806,7 @@ public class StaffPage extends javax.swing.JFrame {
                         .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 884, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jButton11, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(368, Short.MAX_VALUE))
+                .addContainerGap(839, Short.MAX_VALUE))
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -722,13 +850,32 @@ public class StaffPage extends javax.swing.JFrame {
         jScrollPane3.setViewportView(jTable3);
 
         jLabel17.setFont(new java.awt.Font("sansserif", 0, 18)); // NOI18N
-        jLabel17.setText("Account Manager");
+        jLabel17.setText("System Skin Configuration");
 
         jButton16.setText("Add Account");
+        jButton16.putClientProperty("FlatLaf.styleClass", "mgrAdd");
         jButton16.addActionListener(this::jButton16ActionPerformed);
 
         jButton17.setText("Delete Account");
+        jButton17.putClientProperty("FlatLaf.styleClass", "mgrDelS");
         jButton17.addActionListener(this::jButton17ActionPerformed);
+
+        jLabel18.setFont(new java.awt.Font("sansserif", 0, 18)); // NOI18N
+        jLabel18.setText("Account Manager");
+
+        jLabel19.setFont(new java.awt.Font("sansserif", 0, 14)); // NOI18N
+        jLabel19.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel19.setText("Current Skin:");
+
+        jButton18.setText("Apply");
+        jButton18.addActionListener(this::jButton18ActionPerformed);
+
+        jButton19.setFont(new java.awt.Font("sansserif", 1, 14)); // NOI18N
+        jButton19.setText("Back");
+
+        jButton20.setText("Edit Account");
+        jButton20.putClientProperty("FlatLaf.styleClass", "mgrQS");
+        jButton20.addActionListener(this::jButton20ActionPerformed);
 
         javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
@@ -736,31 +883,55 @@ public class StaffPage extends javax.swing.JFrame {
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel7Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel16, javax.swing.GroupLayout.PREFERRED_SIZE, 294, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 294, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(jPanel7Layout.createSequentialGroup()
-                        .addGap(13, 13, 13)
-                        .addComponent(jButton16, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(26, 26, 26)
-                        .addComponent(jButton17)))
-                .addContainerGap(971, Short.MAX_VALUE))
+                        .addComponent(jLabel16, javax.swing.GroupLayout.PREFERRED_SIZE, 294, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton19))
+                    .addGroup(jPanel7Layout.createSequentialGroup()
+                        .addGap(44, 44, 44)
+                        .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel18, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 825, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel7Layout.createSequentialGroup()
+                                .addComponent(jButton16, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(jButton20, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(jButton17))
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel7Layout.createSequentialGroup()
+                                .addComponent(jLabel19, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jButton18))
+                            .addComponent(jLabel17, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 247, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(867, Short.MAX_VALUE))
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel7Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel16, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel16, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton19, javax.swing.GroupLayout.DEFAULT_SIZE, 35, Short.MAX_VALUE))
+                .addGap(17, 17, 17)
+                .addComponent(jLabel18, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton17)
+                    .addComponent(jButton16)
+                    .addComponent(jButton20))
                 .addGap(18, 18, 18)
                 .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 406, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
                 .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton16)
-                    .addComponent(jButton17))
-                .addContainerGap(1144, Short.MAX_VALUE))
+                    .addComponent(jLabel19)
+                    .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton18))
+                .addContainerGap(1177, Short.MAX_VALUE))
         );
 
         jPanel2.add(jPanel7, "settings");
@@ -827,6 +998,7 @@ public class StaffPage extends javax.swing.JFrame {
         // TODO add your handling code here:
         CardLayout cl = (CardLayout) jPanel2.getLayout();
         
+        refreshAccountTable();
         cl.show(jPanel2, "settings");
     }//GEN-LAST:event_jButton3ActionPerformed
 
@@ -943,11 +1115,36 @@ public class StaffPage extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton16ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton16ActionPerformed
-        // TODO add your handling code here:
+        // Add Account
+        String[] result = showAccountDialog("Add Account", null, null, false);
+        if (result == null) return;
+
+        if (database.addUser(result[0], result[1], result[2])) {
+            database.log("Created Account: " + result[0] + " Role: " + result[2]);
+            refreshAccountTable();
+        }
     }//GEN-LAST:event_jButton16ActionPerformed
 
     private void jButton17ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton17ActionPerformed
-        // TODO add your handling code here:
+        // Delete Account
+        String name = requireSelectedAccount();
+        if (name == null) return;
+
+        if (name.equals(user.getUsername())) {
+            JOptionPane.showMessageDialog(this, "You can't delete the account you are logged in with here.",
+                    "Delete Account", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int choice = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to delete \"" + name + "\"?\nThis can't be undone.",
+                "Confirm Delete", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (choice != JOptionPane.YES_OPTION) return;
+
+        if (database.deleteUser(name)) {
+            database.log("Deleted Account: " + name);
+            refreshAccountTable();
+        }
     }//GEN-LAST:event_jButton17ActionPerformed
 
     private void jPasswordField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jPasswordField1ActionPerformed
@@ -977,6 +1174,34 @@ public class StaffPage extends javax.swing.JFrame {
             }
         }
     }//GEN-LAST:event_jPasswordField1ActionPerformed
+
+    private void jButton18ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton18ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButton18ActionPerformed
+
+    private void jButton20ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton20ActionPerformed
+        // Edit Account
+        String oldName = requireSelectedAccount();
+        if (oldName == null) return;
+
+        String[] result = showAccountDialog("Edit Account", oldName, getSelectedAccountType(), true);
+        if (result == null) return;
+
+        if (database.updateUser(oldName, result[0], result[1], result[2])) {
+            database.log("Edited Account: " + oldName + " -> " + result[0] + " Role: " + result[2]
+                    + (result[1].isEmpty() ? "" : " (password changed)"));
+
+            // if you edited the account you are logged in with, keep the session in sync
+            if (oldName.equals(user.getUsername())) {
+                user.setUsername(result[0]);
+                if (!result[1].isEmpty()) user.setPassword(result[1]);
+                jLabel6.setText("Welcome, " + user.getUsername() + "!");
+            }
+            refreshAccountTable();
+            JOptionPane.showMessageDialog(this, "Account updated.",
+                    "User Success", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }//GEN-LAST:event_jButton20ActionPerformed
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
@@ -988,7 +1213,10 @@ public class StaffPage extends javax.swing.JFrame {
     private javax.swing.JButton jButton15;
     private javax.swing.JButton jButton16;
     private javax.swing.JButton jButton17;
+    private javax.swing.JButton jButton18;
+    private javax.swing.JButton jButton19;
     private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton20;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
@@ -997,6 +1225,7 @@ public class StaffPage extends javax.swing.JFrame {
     private javax.swing.JButton jButton8;
     private javax.swing.JButton jButton9;
     private javax.swing.JComboBox<String> jComboBox1;
+    private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -1006,6 +1235,8 @@ public class StaffPage extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel17;
+    private javax.swing.JLabel jLabel18;
+    private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -1014,6 +1245,7 @@ public class StaffPage extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
+    private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;

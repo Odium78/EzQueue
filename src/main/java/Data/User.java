@@ -11,6 +11,7 @@ package Data;
 public class User {
     private String username;
     private String password;    // as is not encrypted
+    private String type;
     
     public User(String username, String password) {
         this.username = username;

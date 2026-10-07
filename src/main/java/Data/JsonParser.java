@@ -19,7 +19,7 @@ public class JsonParser {
     
     public Company parseCompany() {
         try {
-            return mapper.readValue(new File("data.json"), Company.class);
+            return mapper.readValue(new File("settings.json"), Company.class);
         } catch (IOException e) {
             throw new RuntimeException("Failed to parse Company JSON", e);
         }
