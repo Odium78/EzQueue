@@ -252,6 +252,11 @@ public class StaffPage extends javax.swing.JFrame {
         jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel3.setText("LOGIN");
 
+        jTextField1.putClientProperty("FlatLaf.styleClass", "loginBar");
+        jTextField1.addActionListener(this::jTextField1ActionPerformed);
+
+        jPasswordField1.putClientProperty("FlatLaf.styleClass", "loginBar");
+
         jLabel4.setText("Username");
 
         jLabel5.setText("Password");
@@ -705,7 +710,6 @@ public class StaffPage extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
-        
         if(database.authUser(jTextField1.getText(), new String(jPasswordField1.getPassword()))){
             user.setUsername(jTextField1.getText());
             jLabel6.setText("Welcome, " + user.getUsername() + "!");
@@ -741,6 +745,7 @@ public class StaffPage extends javax.swing.JFrame {
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         // TODO add your handling code here:
+        jLabel12.setText("Account Name: " + user.getUsername());
         CardLayout cl = (CardLayout) jPanel2.getLayout();
         
         cl.show(jPanel2, "account");
@@ -861,6 +866,10 @@ public class StaffPage extends javax.swing.JFrame {
         
         database.log("Account Created " + jTextField2.getText());
     }//GEN-LAST:event_jButton16ActionPerformed
+
+    private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jTextField1ActionPerformed
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;

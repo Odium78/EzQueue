@@ -28,13 +28,13 @@ public class EzQueueProj {
             Company company = parser.parseCompany();
             
             try {
-                switch (company.getTheme().toLowerCase()){
-                    case "darcula" -> { FlatDarculaLaf.setup(); }
-                    case "light" -> { FlatLightLaf.setup(); }
-                    default -> { FlatLightLaf.setup(); }
-                }
+//                switch (company.getTheme().toLowerCase()){
+//                    case "darcula" -> { FlatDarculaLaf.setup(); }
+//                    case "light" -> { FlatLightLaf.setup(); }
+//                    default -> { FlatLightLaf.setup(); }
+//                }
 
-//                SkinLoader.apply(company.getTheme());
+                SkinLoader.apply(company.getTheme());
             } catch (Exception ex) {
                 System.getLogger(EzQueueProj.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
             }
