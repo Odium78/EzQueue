@@ -252,12 +252,6 @@ public class StaffPage extends javax.swing.JFrame {
         jLabel23.setText("");
     }
 
-    private void showPasswordTooShort() {
-        JOptionPane.showMessageDialog(this,
-                "Password must be at least " + MIN_PASSWORD_LENGTH + " characters long.",
-                "Invalid Password", JOptionPane.ERROR_MESSAGE);
-    }
-
     private void setupAccountTable() {
         jTable3.setModel(new DefaultTableModel(new Object[][]{}, new String[]{"Name", "Type"}) {
             @Override
@@ -358,7 +352,9 @@ public class StaffPage extends javax.swing.JFrame {
             }
             // length checks
             if (!pass.isEmpty() && pass.length() < MIN_PASSWORD_LENGTH) {
-                showPasswordTooShort();
+                JOptionPane.showMessageDialog(this,
+                "Password must be at least " + MIN_PASSWORD_LENGTH + " characters long.",
+                "Invalid Password", JOptionPane.ERROR_MESSAGE);
                 continue;
             }
             // check if username is taken b4 query
@@ -1172,7 +1168,9 @@ public class StaffPage extends javax.swing.JFrame {
         String passString = new String(jPasswordField2.getPassword()).trim();
 
         if (!passString.isEmpty() && passString.length() < MIN_PASSWORD_LENGTH) {
-            showPasswordTooShort();
+            JOptionPane.showMessageDialog(this,
+                "Password must be at least " + MIN_PASSWORD_LENGTH + " characters long.",
+                "Invalid Password", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -1183,20 +1181,20 @@ public class StaffPage extends javax.swing.JFrame {
             
             database.log("User Updated Username and Password: " + user.getUsername());
             JOptionPane.showMessageDialog(null, "Changed Username and Password Successfully",
-                        "User Success", JOptionPane.OK_OPTION);
+                        "User Success", JOptionPane.INFORMATION_MESSAGE);
         } else if (!passString.isEmpty()){
             database.updatePassword(user.getUsername(), passString);
             
             database.log("User Updated Password: " + user.getUsername());
             JOptionPane.showMessageDialog(null, "Changed Password Successfully",
-                        "User Success", JOptionPane.OK_OPTION);
+                        "User Success", JOptionPane.INFORMATION_MESSAGE);
         } else if (!jTextField2.getText().trim().isEmpty()){
             database.updateUsername(user.getUsername(), jTextField2.getText());
             user.setUsername(jTextField2.getText());
             
             database.log("User Updated Username: " + user.getUsername());
             JOptionPane.showMessageDialog(null, "Changed Username Successfully",
-                        "User Success", JOptionPane.OK_OPTION);
+                        "User Success", JOptionPane.INFORMATION_MESSAGE);
         } else {
             JOptionPane.showMessageDialog(null, "No Account Changes Made",
                         "User Info", JOptionPane.INFORMATION_MESSAGE);
