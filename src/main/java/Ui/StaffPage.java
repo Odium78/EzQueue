@@ -476,6 +476,7 @@ public class StaffPage extends javax.swing.JFrame {
         jButton1.setBackground(javax.swing.UIManager.getDefaults().getColor("Actions.Green"));
         jButton1.setText("LOGIN");
         jButton1.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        jButton1.putClientProperty("FlatLaf.styleClass", "loginBut");
         jButton1.addActionListener(this::jButton1ActionPerformed);
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
@@ -571,6 +572,7 @@ public class StaffPage extends javax.swing.JFrame {
         jLabel7.setText("Powered by EzQueue");
 
         jButton6.setText("Menu");
+        jButton6.putClientProperty("FlatLaf.styleClass", "menuBut");
         jButton6.addActionListener(this::jButton6ActionPerformed);
 
         jButton9.setFont(new java.awt.Font("sansserif", 3, 14)); // NOI18N
@@ -860,6 +862,7 @@ public class StaffPage extends javax.swing.JFrame {
 
         jButton14.setFont(new java.awt.Font("sansserif", 1, 14)); // NOI18N
         jButton14.setText("Go Back");
+        jButton14.putClientProperty("FlatLaf.styleClass", "menuBut");
         jButton14.addActionListener(this::jButton14ActionPerformed);
 
         javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
@@ -944,6 +947,7 @@ public class StaffPage extends javax.swing.JFrame {
 
         jButton19.setFont(new java.awt.Font("sansserif", 1, 14)); // NOI18N
         jButton19.setText("Back");
+        jButton19.putClientProperty("FlatLaf.styleClass", "menuBut");
         jButton19.addActionListener(this::jButton19ActionPerformed);
 
         jButton20.setText("Edit Account");

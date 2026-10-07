@@ -35,15 +35,15 @@ public class QueuePage extends javax.swing.JFrame {
     private JsonParser parser = new JsonParser();
     Company company = parser.parseCompany();
     private static final int MAX_WAITING_SHOWN = 12;
-    private static final int LOGO_MAX_WIDTH = 300;  // header space for the logo
-    private static final int LOGO_MAX_HEIGHT = 47;  // jLabel2 height in the form
+    private static final int LOGO_MAX_WIDTH = 300;
+    private static final int LOGO_MAX_HEIGHT = 47;
 
     /**
      * Creates new form Queue
      */
     public QueuePage() {
         initComponents();
-        refreshLogo(); // use the saved custom logo, if there is one
+        refreshLogo();
         startClock();
         
         QueueManager.getInstance().addListener(this::refreshQueue);
@@ -51,7 +51,6 @@ public class QueuePage extends javax.swing.JFrame {
 
     }
     
-    // Shows the saved custom logo in jLabel2 (keeps the default logo if none was saved)
     public void refreshLogo() {
         ImageIcon icon = LogoManager.loadIcon(LOGO_MAX_WIDTH, LOGO_MAX_HEIGHT);
         if (icon == null) return;
@@ -63,20 +62,22 @@ public class QueuePage extends javax.swing.JFrame {
     private void startClock() {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("hh:mm:ss a");
 
-        clockLabel.setText(LocalDateTime.now().format(fmt)); // show it right away
-        clockTimer = new Timer(1000, e ->
-            clockLabel.setText(LocalDateTime.now().format(fmt)));
+        clockLabel.setText(LocalDateTime.now().format(fmt));
+        clockTimer = new Timer(1000, e -> {
+            clockLabel.setText(LocalDateTime.now().format(fmt));
+            clockLabel.putClientProperty("FlatLaf.styleClass", "clock");
+        } );
         clockTimer.start();
     }
     
     private void refreshQueue() {
         QueueManager queue = QueueManager.getInstance();
  
-        showServing(jLabel8, queue.getServing(Lane.REGULAR));    // regular
-        showServing(jLabel11, queue.getServing(Lane.PRIORITY));  // priority
+        showServing(jLabel8, queue.getServing(Lane.REGULAR)); // regular
+        showServing(jLabel11, queue.getServing(Lane.PRIORITY)); // priority
  
-        showWaiting(jPanel8, queue.getLine(Lane.REGULAR));       // regular line
-        showWaiting(jPanel9, queue.getLine(Lane.PRIORITY));      // priority line
+        showWaiting(jPanel8, queue.getLine(Lane.REGULAR)); // regular line
+        showWaiting(jPanel9, queue.getLine(Lane.PRIORITY)); // priority line
     }
     
     private void showServing(JLabel label, QueueEntry serving) {
@@ -89,7 +90,7 @@ public class QueuePage extends javax.swing.JFrame {
         int waiting = 0;
         int shown = 0;
         for (QueueEntry entry : line) {
-            if (entry.isServing()) continue; // being served -> not shown down here
+            if (entry.isServing()) continue;
             waiting++;
             if (shown < MAX_WAITING_SHOWN) {
                 panel.add(makeTicketLabel(entry.getNumberText()));
@@ -109,6 +110,7 @@ public class QueuePage extends javax.swing.JFrame {
         label.setFont(new Font("Noto Sans", Font.BOLD, 24));
         label.setForeground(Color.BLACK);
         label.setBorder(BorderFactory.createLineBorder(new Color(150, 150, 150)));
+        label.putClientProperty("FlatLaf.styleClass", "ticket");
         return label;
     }
 
@@ -159,7 +161,7 @@ public class QueuePage extends javax.swing.JFrame {
         jLabel8.setForeground(new java.awt.Color(0, 0, 0));
         jLabel8.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel8.setText("00");
-        jLabel8.putClientProperty("FlatLaf.styleClass", "queueText");
+        jLabel8.putClientProperty("FlatLaf.styleClass", "queueNumber");
 
         jLabel9.setFont(new java.awt.Font("Noto Sans", 1, 24)); // NOI18N
         jLabel9.setForeground(new java.awt.Color(0, 0, 0));
@@ -204,7 +206,7 @@ public class QueuePage extends javax.swing.JFrame {
         jLabel11.setForeground(new java.awt.Color(0, 0, 0));
         jLabel11.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel11.setText("00");
-        jLabel11.putClientProperty("FlatLaf.styleClass", "queueText");
+        jLabel11.putClientProperty("FlatLaf.styleClass", "queueNumber");
 
         jLabel12.setFont(new java.awt.Font("Noto Sans", 1, 24)); // NOI18N
         jLabel12.setForeground(new java.awt.Color(0, 0, 0));
@@ -275,8 +277,8 @@ public class QueuePage extends javax.swing.JFrame {
                                 .addComponent(jLabel2)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(jLabel1)
-                                .addGap(136, 136, 136)
-                                .addComponent(clockLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 232, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(clockLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 362, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(jPanel4Layout.createSequentialGroup()
                                 .addGap(8, 8, 8)
                                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -291,7 +293,7 @@ public class QueuePage extends javax.swing.JFrame {
                             .addGroup(jPanel4Layout.createSequentialGroup()
                                 .addGap(6, 6, 6)
                                 .addComponent(jPanel9, javax.swing.GroupLayout.PREFERRED_SIZE, 843, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(76, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

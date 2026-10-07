@@ -26,7 +26,7 @@ public class JsonParser {
         }
     }
 
-    // Writes the company name into settings.json (other settings are kept as they are)
+    // write the company name into settings.json
     public void saveCompanyName(String companyName) {
         File file = new File("settings.json");
         try {
@@ -38,7 +38,6 @@ public class JsonParser {
         }
     }
 
-    // Writes the chosen skin into settings.json (other settings are kept as they are)
     public void saveTheme(String theme) {
         File file = new File("settings.json");
         try {
@@ -49,4 +48,6 @@ public class JsonParser {
             throw new RuntimeException("Failed to save theme to settings.json", e);
         }
     }
+    
+    // apply() applies skin on launch its native to flatlaf kasi saveTheme() applies in memory
 }

@@ -180,6 +180,9 @@
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton1ActionPerformed"/>
               </Events>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="jButton1.putClientProperty(&quot;FlatLaf.styleClass&quot;, &quot;loginBut&quot;);"/>
+              </AuxValues>
             </Component>
           </SubComponents>
         </Container>
@@ -317,6 +320,9 @@
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton6ActionPerformed"/>
               </Events>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="jButton6.putClientProperty(&quot;FlatLaf.styleClass&quot;, &quot;menuBut&quot;);&#xa;"/>
+              </AuxValues>
             </Component>
             <Component class="javax.swing.JButton" name="jButton9">
               <Properties>
@@ -836,6 +842,9 @@
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton14ActionPerformed"/>
               </Events>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="jButton14.putClientProperty(&quot;FlatLaf.styleClass&quot;, &quot;menuBut&quot;);"/>
+              </AuxValues>
             </Component>
           </SubComponents>
         </Container>
@@ -1057,6 +1066,9 @@
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton19ActionPerformed"/>
               </Events>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="jButton19.putClientProperty(&quot;FlatLaf.styleClass&quot;, &quot;menuBut&quot;);"/>
+              </AuxValues>
             </Component>
             <Component class="javax.swing.JButton" name="jButton20">
               <Properties>

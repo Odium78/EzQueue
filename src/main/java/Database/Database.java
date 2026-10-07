@@ -164,11 +164,10 @@ public class Database {
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, e.getMessage(),
                     "SQL ERROR " + e.getErrorCode(), JOptionPane.ERROR_MESSAGE);
-            return true; // be safe: treat as taken if we could not check
+            return true; // be safe
         }
     }
     
-    // newPassword can be null or empty to keep the old password
     public boolean updateUser(String oldUsername, String newUsername, String newPassword, String newType){
         boolean changePass = newPassword != null && !newPassword.isEmpty();
         String query = changePass
@@ -191,7 +190,6 @@ public class Database {
         }
     }
 
-    // returns the role (admin / manager / staff) or null if the user is not found
     public String getUserType(String username){
         String query = "SELECT type FROM users WHERE username = ?";
         try (PreparedStatement exec = database.prepareStatement(query)) {
