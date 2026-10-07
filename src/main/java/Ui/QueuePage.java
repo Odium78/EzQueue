@@ -6,6 +6,7 @@ package Ui;
 
 import Data.Company;
 import Data.JsonParser;
+import Data.LogoManager;
 import Data.QueueEntry;
 import Data.QueueEntry.Lane;
 import Data.QueueManager;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -33,12 +35,15 @@ public class QueuePage extends javax.swing.JFrame {
     private JsonParser parser = new JsonParser();
     Company company = parser.parseCompany();
     private static final int MAX_WAITING_SHOWN = 12;
+    private static final int LOGO_MAX_WIDTH = 300;  // header space for the logo
+    private static final int LOGO_MAX_HEIGHT = 47;  // jLabel2 height in the form
 
     /**
      * Creates new form Queue
      */
     public QueuePage() {
         initComponents();
+        refreshLogo(); // use the saved custom logo, if there is one
         startClock();
         
         QueueManager.getInstance().addListener(this::refreshQueue);
@@ -46,6 +51,15 @@ public class QueuePage extends javax.swing.JFrame {
 
     }
     
+    // Shows the saved custom logo in jLabel2 (keeps the default logo if none was saved)
+    public void refreshLogo() {
+        ImageIcon icon = LogoManager.loadIcon(LOGO_MAX_WIDTH, LOGO_MAX_HEIGHT);
+        if (icon == null) return;
+        jLabel2.setIcon(icon);
+        jLabel2.revalidate();
+        jLabel2.repaint();
+    }
+
     private void startClock() {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("hh:mm:ss a");
 
@@ -127,11 +141,10 @@ public class QueuePage extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Queue");
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setResizable(false);
 
         jLabel2.setFont(new java.awt.Font("Noto Sans", 1, 36)); // NOI18N
-        jLabel2.setText(company.getcompanyName());
+        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/logo.png"))); // NOI18N
 
         jPanel6.setBackground(new java.awt.Color(204, 204, 204));
         jPanel6.putClientProperty("FlatLaf.styleClass", "queuePanel");
@@ -278,7 +291,7 @@ public class QueuePage extends javax.swing.JFrame {
                             .addGroup(jPanel4Layout.createSequentialGroup()
                                 .addGap(6, 6, 6)
                                 .addComponent(jPanel9, javax.swing.GroupLayout.PREFERRED_SIZE, 843, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                .addContainerGap(76, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

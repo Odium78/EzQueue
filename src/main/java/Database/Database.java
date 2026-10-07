@@ -138,7 +138,37 @@ public class Database {
         }
         return logs;
     }
+
+    public List<String[]> getUsers(){
+        List<String[]> users = new ArrayList<>();
+        String query = "SELECT username, type FROM users ORDER BY username";
+        try (PreparedStatement exec = database.prepareStatement(query);
+             ResultSet set = exec.executeQuery()) {
+            while (set.next()) {
+                users.add(new String[]{set.getString("username"), set.getString("type")});
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.getMessage(),
+                    "SQL ERROR " + e.getErrorCode(), JOptionPane.ERROR_MESSAGE);
+        }
+        return users;
+    }
     
+    public boolean userExists(String username){
+        String query = "SELECT 1 FROM users WHERE username = ?";
+        try (PreparedStatement exec = database.prepareStatement(query)) {
+            exec.setString(1, username);
+            try (ResultSet set = exec.executeQuery()) {
+                return set.next();
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.getMessage(),
+                    "SQL ERROR " + e.getErrorCode(), JOptionPane.ERROR_MESSAGE);
+            return true; // be safe: treat as taken if we could not check
+        }
+    }
+    
+    // newPassword can be null or empty to keep the old password
     public boolean updateUser(String oldUsername, String newUsername, String newPassword, String newType){
         boolean changePass = newPassword != null && !newPassword.isEmpty();
         String query = changePass
@@ -160,34 +190,19 @@ public class Database {
             return false;
         }
     }
-    
-    public boolean userExists(String username){
-        String query = "SELECT 1 FROM users WHERE username = ?";
+
+    // returns the role (admin / manager / staff) or null if the user is not found
+    public String getUserType(String username){
+        String query = "SELECT type FROM users WHERE username = ?";
         try (PreparedStatement exec = database.prepareStatement(query)) {
             exec.setString(1, username);
             try (ResultSet set = exec.executeQuery()) {
-                return set.next();
+                return set.next() ? set.getString("type") : null;
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, e.getMessage(),
                     "SQL ERROR " + e.getErrorCode(), JOptionPane.ERROR_MESSAGE);
-            return true; // be safe: treat as taken if we could not check
+            return null;
         }
     }
-    
-    public List<String[]> getUsers(){
-        List<String[]> users = new ArrayList<>();
-        String query = "SELECT username, type FROM users ORDER BY username";
-        try (PreparedStatement exec = database.prepareStatement(query);
-             ResultSet set = exec.executeQuery()) {
-            while (set.next()) {
-                users.add(new String[]{set.getString("username"), set.getString("type")});
-            }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.getMessage(),
-                    "SQL ERROR " + e.getErrorCode(), JOptionPane.ERROR_MESSAGE);
-        }
-        return users;
-    }
-
 }

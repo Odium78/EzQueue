@@ -33,8 +33,9 @@ public class EzQueueProj {
                 System.getLogger(EzQueueProj.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
             }
 
-            new StaffPage(db).setVisible(true);
-            new QueuePage().setVisible(true);
+            QueuePage queuePage = new QueuePage();
+            new StaffPage(db, queuePage).setVisible(true);
+            queuePage.setVisible(true);
             
             db.log("Program Started");
         });

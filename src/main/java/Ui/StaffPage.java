@@ -6,19 +6,27 @@ package Ui;
 
 import Data.Company;
 import Data.JsonParser;
+import Data.LogoManager;
 import Data.QueueEntry;
 import Data.QueueEntry.Lane;
 import Data.QueueManager;
+import Data.SkinLoader;
 import Data.User;
 import Database.Database;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridLayout;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -27,6 +35,7 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 /**
@@ -36,7 +45,7 @@ import javax.swing.table.DefaultTableModel;
 public class StaffPage extends javax.swing.JFrame {
     JsonParser parser = new JsonParser();
     Company company = parser.parseCompany();
-    QueuePage queuePage = new QueuePage();
+    private final QueuePage queuePage; // the visible queue display, so the logo can be refreshed live
     Database database;
     
     private static final Color SERVING_COLOR = new Color(43, 94, 40);
@@ -51,14 +60,17 @@ public class StaffPage extends javax.swing.JFrame {
     /**
      * Creates new form HomePage
      */
-    public StaffPage(Database database) {
+    public StaffPage(Database database, QueuePage queuePage) {
         initComponents();
         this.database = database;
+        this.queuePage = queuePage;
         
         setupQueueTable();
         setupLogsTable();
         setupAccountTable();
         refreshAccountTable();
+        setupSkinCombo();
+        setupCompanySettings();
         queue.addListener(this::refreshQueueTable);
         refreshQueueTable();
     }
@@ -188,6 +200,58 @@ public class StaffPage extends javax.swing.JFrame {
         for (String[] row : database.getLogs()) {
             model.addRow(row);
         }
+    }
+
+    // Role privileges. Unknown or missing roles count as "staff" (least access).
+    private void applyRole(String username) {
+        String role = database.getUserType(username);
+        role = (role == null) ? "staff" : role.trim().toLowerCase();
+        if (!role.equals("admin") && !role.equals("manager")) role = "staff";
+        user.setType(role);
+
+        boolean elevated = role.equals("admin") || role.equals("manager");
+        jButton2.setVisible(true);          // Manage Queue    - everyone
+        jButton4.setVisible(true);          // Account         - everyone
+        jButton5.setVisible(elevated);      // Logs            - manager, admin
+        jButton3.setVisible(elevated);      // System Settings - manager, admin
+        jButton18.setEnabled(role.equals("admin")); // Apply skin - admin only
+    }
+
+    // Fill the skin dropdown from the Skins resource folder and select the current skin
+    private void setupSkinCombo() {
+        List<String> skins = SkinLoader.listSkins();
+        jComboBox2.setModel(new DefaultComboBoxModel<>(skins.toArray(new String[0])));
+
+        String current = company.getTheme();
+        for (String skin : skins) {
+            if (skin.equalsIgnoreCase(current)) {
+                jComboBox2.setSelectedItem(skin);
+                break;
+            }
+        }
+    }
+
+    // size of the jLabel23 preview box (fixed in the form)
+    private static final int LOGO_PREVIEW_WIDTH = 152;
+    private static final int LOGO_PREVIEW_HEIGHT = 59;
+
+    private BufferedImage pendingLogo; // picked with Select File, saved with the logo Apply button
+
+    // Fill the name field and show the currently saved logo (if any) in the preview
+    private void setupCompanySettings() {
+        String name = company.getcompanyName();
+        jTextField3.setText(name == null ? "" : name);
+
+        ImageIcon saved = LogoManager.loadIcon(LOGO_PREVIEW_WIDTH, LOGO_PREVIEW_HEIGHT);
+        if (saved != null) {
+            jLabel23.setIcon(saved);
+            jLabel23.setText("");
+        }
+    }
+
+    private void showLogoPreview(BufferedImage image) {
+        jLabel23.setIcon(LogoManager.scaleToFit(image, LOGO_PREVIEW_WIDTH, LOGO_PREVIEW_HEIGHT));
+        jLabel23.setText("");
     }
 
     private static final String[] ROLES = {"admin", "manager", "staff"};
@@ -374,6 +438,14 @@ public class StaffPage extends javax.swing.JFrame {
         jButton18 = new javax.swing.JButton();
         jButton19 = new javax.swing.JButton();
         jButton20 = new javax.swing.JButton();
+        jLabel20 = new javax.swing.JLabel();
+        jLabel21 = new javax.swing.JLabel();
+        jTextField3 = new javax.swing.JTextField();
+        jButton21 = new javax.swing.JButton();
+        jLabel22 = new javax.swing.JLabel();
+        jLabel23 = new javax.swing.JLabel();
+        jButton22 = new javax.swing.JButton();
+        jButton23 = new javax.swing.JButton();
 
         jMenuItem1.setText("jMenuItem1");
 
@@ -452,7 +524,7 @@ public class StaffPage extends javax.swing.JFrame {
                 .addComponent(jPasswordField1, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(45, 45, 45)
                 .addComponent(jButton1)
-                .addContainerGap(1200, Short.MAX_VALUE))
+                .addContainerGap(1282, Short.MAX_VALUE))
         );
 
         jPanel2.add(jPanel3, "login");
@@ -581,7 +653,7 @@ public class StaffPage extends javax.swing.JFrame {
                     .addComponent(jButton9, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(29, 29, 29)
                 .addComponent(jLabel7)
-                .addContainerGap(1049, Short.MAX_VALUE))
+                .addContainerGap(1131, Short.MAX_VALUE))
         );
 
         jPanel2.add(jPanel5, "mgr");
@@ -636,7 +708,7 @@ public class StaffPage extends javax.swing.JFrame {
                         .addGap(17, 17, 17)
                         .addComponent(jLabel6))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(420, 420, 420)
+                        .addGap(419, 419, 419)
                         .addComponent(jLabel10)))
                 .addContainerGap(843, Short.MAX_VALUE))
         );
@@ -653,9 +725,9 @@ public class StaffPage extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(42, 42, 42)
+                .addGap(18, 18, 18)
                 .addComponent(jLabel10)
-                .addContainerGap(1048, Short.MAX_VALUE))
+                .addContainerGap(1154, Short.MAX_VALUE))
         );
 
         jPanel2.add(jPanel1, "dash");
@@ -747,7 +819,7 @@ public class StaffPage extends javax.swing.JFrame {
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton8, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jButton10))
-                .addContainerGap(1177, Short.MAX_VALUE))
+                .addContainerGap(1259, Short.MAX_VALUE))
         );
 
         jPanel2.add(jPanel4, "account");
@@ -819,7 +891,7 @@ public class StaffPage extends javax.swing.JFrame {
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 480, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(jButton11, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(1062, Short.MAX_VALUE))
+                .addContainerGap(1144, Short.MAX_VALUE))
         );
 
         jPanel2.add(jPanel6, "logs");
@@ -872,10 +944,35 @@ public class StaffPage extends javax.swing.JFrame {
 
         jButton19.setFont(new java.awt.Font("sansserif", 1, 14)); // NOI18N
         jButton19.setText("Back");
+        jButton19.addActionListener(this::jButton19ActionPerformed);
 
         jButton20.setText("Edit Account");
         jButton20.putClientProperty("FlatLaf.styleClass", "mgrQS");
         jButton20.addActionListener(this::jButton20ActionPerformed);
+
+        jLabel20.setFont(new java.awt.Font("sansserif", 0, 18)); // NOI18N
+        jLabel20.setText("System Description Configuration");
+
+        jLabel21.setFont(new java.awt.Font("sansserif", 0, 14)); // NOI18N
+        jLabel21.setText("Name:");
+
+        jTextField3.addActionListener(this::jTextField3ActionPerformed);
+
+        jButton21.setText("Apply");
+        jButton21.addActionListener(this::jButton21ActionPerformed);
+
+        jLabel22.setFont(new java.awt.Font("sansserif", 0, 14)); // NOI18N
+        jLabel22.setText("Logo:");
+
+        jLabel23.setFont(new java.awt.Font("sansserif", 2, 14)); // NOI18N
+        jLabel23.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel23.setText("-- No Preview --");
+
+        jButton22.setText("Select File");
+        jButton22.addActionListener(this::jButton22ActionPerformed);
+
+        jButton23.setText("Apply");
+        jButton23.addActionListener(this::jButton23ActionPerformed);
 
         javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
@@ -890,22 +987,41 @@ public class StaffPage extends javax.swing.JFrame {
                         .addComponent(jButton19))
                     .addGroup(jPanel7Layout.createSequentialGroup()
                         .addGap(44, 44, 44)
-                        .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel18, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                             .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 825, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(jPanel7Layout.createSequentialGroup()
-                                .addComponent(jButton16, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(jButton20, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(jButton17))
+                                .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 247, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel7Layout.createSequentialGroup()
+                                        .addComponent(jButton16, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(jButton20, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(jButton17))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel7Layout.createSequentialGroup()
+                                        .addComponent(jLabel20, javax.swing.GroupLayout.PREFERRED_SIZE, 290, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(123, 123, 123))))
+                            .addComponent(jLabel18, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel7Layout.createSequentialGroup()
-                                .addComponent(jLabel19, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jLabel19, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jButton18)
+                                .addGap(18, 18, 18)
+                                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel21, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel22, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jButton18))
-                            .addComponent(jLabel17, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 247, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel23, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jButton22))
+                                .addGap(18, 18, 18)
+                                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jButton21)
+                                    .addComponent(jButton23))))))
                 .addContainerGap(867, Short.MAX_VALUE))
         );
         jPanel7Layout.setVerticalGroup(
@@ -925,13 +1041,25 @@ public class StaffPage extends javax.swing.JFrame {
                     .addComponent(jButton16)
                     .addComponent(jButton20))
                 .addGap(18, 18, 18)
-                .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel20, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel19)
                     .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton18))
-                .addContainerGap(1177, Short.MAX_VALUE))
+                    .addComponent(jButton18)
+                    .addComponent(jLabel21)
+                    .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton21))
+                .addGap(18, 18, 18)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel22)
+                    .addComponent(jLabel23, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton23))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButton22)
+                .addContainerGap(1152, Short.MAX_VALUE))
         );
 
         jPanel2.add(jPanel7, "settings");
@@ -957,6 +1085,7 @@ public class StaffPage extends javax.swing.JFrame {
             user.setUsername(jTextField1.getText());
             jLabel6.setText("Welcome, " + user.getUsername() + "!");
             user.setPassword(new String(jPasswordField1.getPassword()));
+            applyRole(user.getUsername());
             
             CardLayout cl = (CardLayout) jPanel2.getLayout();
             cl.show(jPanel2, "dash");
@@ -1153,6 +1282,7 @@ public class StaffPage extends javax.swing.JFrame {
             user.setUsername(jTextField1.getText());
             jLabel6.setText("Welcome, " + user.getUsername() + "!");
             user.setPassword(new String(jPasswordField1.getPassword()));
+            applyRole(user.getUsername());
             
             CardLayout cl = (CardLayout) jPanel2.getLayout();
             cl.show(jPanel2, "dash");
@@ -1176,9 +1306,38 @@ public class StaffPage extends javax.swing.JFrame {
     }//GEN-LAST:event_jPasswordField1ActionPerformed
 
     private void jButton18ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton18ActionPerformed
-        // TODO add your handling code here:
+        // Apply skin
+        String skin = (String) jComboBox2.getSelectedItem();
+        if (skin == null) {
+            JOptionPane.showMessageDialog(this, "No skin selected.",
+                    "Skin", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        try {
+            SkinLoader.apply(skin);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Could not apply skin \"" + skin + "\":\n" + ex.getMessage(),
+                    "Skin Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        database.log("Skin Changed: " + skin);
+
+        try {
+            parser.saveTheme(skin);
+        } catch (RuntimeException ex) {
+            JOptionPane.showMessageDialog(this, "Skin applied, but it could not be saved to settings.json.",
+                    "Skin", JOptionPane.WARNING_MESSAGE);
+        }
     }//GEN-LAST:event_jButton18ActionPerformed
 
+    private void jButton19ActionPerformed(java.awt.event.ActionEvent evt) {                                          
+        CardLayout cl = (CardLayout) jPanel2.getLayout();
+        
+        cl.show(jPanel2, "dash");
+    }       
+    
     private void jButton20ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton20ActionPerformed
         // Edit Account
         String oldName = requireSelectedAccount();
@@ -1196,12 +1355,94 @@ public class StaffPage extends javax.swing.JFrame {
                 user.setUsername(result[0]);
                 if (!result[1].isEmpty()) user.setPassword(result[1]);
                 jLabel6.setText("Welcome, " + user.getUsername() + "!");
+                applyRole(user.getUsername());
+                if (!jButton3.isVisible()) {
+                    ((CardLayout) jPanel2.getLayout()).show(jPanel2, "dash");
+                }
             }
             refreshAccountTable();
             JOptionPane.showMessageDialog(this, "Account updated.",
                     "User Success", JOptionPane.INFORMATION_MESSAGE);
         }
     }//GEN-LAST:event_jButton20ActionPerformed
+
+    private void jTextField3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField3ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jTextField3ActionPerformed
+
+    private void jButton21ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton21ActionPerformed
+        // Apply company name
+        String name = jTextField3.getText().trim();
+        if (name.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Company name cannot be empty.",
+                    "Company Name", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            parser.saveCompanyName(name);
+            company = parser.parseCompany(); // reload so the saved value is what we use
+        } catch (RuntimeException ex) {
+            JOptionPane.showMessageDialog(this, "Could not save the company name to settings.json.",
+                    "Company Name", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        jTextField3.setText(name);
+        jLabel1.setText(name + " Staff Panel");
+        database.log("Company Name Changed: " + name);
+        JOptionPane.showMessageDialog(this, "Company name saved.",
+                "Company Name", JOptionPane.INFORMATION_MESSAGE);
+    }//GEN-LAST:event_jButton21ActionPerformed
+
+    private void jButton22ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton22ActionPerformed
+        // Select logo file and preview it
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Select Logo");
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                "Images (png, jpg, gif, bmp)", "png", "jpg", "jpeg", "gif", "bmp");
+        chooser.setAcceptAllFileFilterUsed(false);
+        chooser.addChoosableFileFilter(filter);
+        chooser.setFileFilter(filter);
+        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
+
+        File file = chooser.getSelectedFile();
+        try {
+            BufferedImage image = LogoManager.read(file);
+            if (image == null) {
+                JOptionPane.showMessageDialog(this, "That file is not a supported image.",
+                        "Logo", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            pendingLogo = image;
+            showLogoPreview(image);
+        } catch (IOException | RuntimeException ex) {
+            JOptionPane.showMessageDialog(this, "Could not read the image:\n" + ex.getMessage(),
+                    "Logo", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_jButton22ActionPerformed
+
+    private void jButton23ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton23ActionPerformed
+        // Apply logo: save it and use it in the queue display
+        if (pendingLogo == null) {
+            JOptionPane.showMessageDialog(this, "Select an image first.",
+                    "Logo", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        try {
+            LogoManager.save(pendingLogo);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "Could not save the logo:\n" + ex.getMessage(),
+                    "Logo", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        queuePage.refreshLogo();
+        database.log("Logo Changed");
+        JOptionPane.showMessageDialog(this, "Logo saved.",
+                "Logo", JOptionPane.INFORMATION_MESSAGE);
+    }//GEN-LAST:event_jButton23ActionPerformed
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
@@ -1217,6 +1458,9 @@ public class StaffPage extends javax.swing.JFrame {
     private javax.swing.JButton jButton19;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton20;
+    private javax.swing.JButton jButton21;
+    private javax.swing.JButton jButton22;
+    private javax.swing.JButton jButton23;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
@@ -1238,6 +1482,10 @@ public class StaffPage extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel20;
+    private javax.swing.JLabel jLabel21;
+    private javax.swing.JLabel jLabel22;
+    private javax.swing.JLabel jLabel23;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -1264,5 +1512,6 @@ public class StaffPage extends javax.swing.JFrame {
     private javax.swing.JTable jTable3;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField2;
+    private javax.swing.JTextField jTextField3;
     // End of variables declaration//GEN-END:variables
 }
